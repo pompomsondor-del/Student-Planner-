@@ -1,0 +1,488 @@
+<!DOCTYPE html>
+<html lang="mn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Student Planner - Study Smart</title>
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght=400;600;700&family=Poppins:wght=400;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #FFB7C5;
+            --bg-color: #FFF9E6;
+            --card-bg: #FFFFFF;
+            --text-color: #4A4A4A;
+            --accent: #FFD1DC;
+        }
+
+        .theme-dark { --primary: #4A3B4E; --bg-color: #1A1A2E; --card-bg: #16213E; --text-color: #E0E0E0; --accent: #0F3460; }
+        .theme-mint { --primary: #A8E6CF; --bg-color: #F1F8E9; --card-bg: #FFFFFF; --text-color: #2E403F; --accent: #DCEDC8; }
+        .theme-lavender { --primary: #D1C4E9; --bg-color: #F3E5F5; --card-bg: #FFFFFF; --text-color: #4A148C; --accent: #E1BEE7; }
+        .theme-skyblue { --primary: #B3E5FC; --bg-color: #E1F5FE; --card-bg: #FFFFFF; --text-color: #01579B; --accent: #B3E5FC; }
+        .theme-gold { --primary: #FFE082; --bg-color: #FFF8E1; --card-bg: #FFFFFF; --text-color: #FF6F00; --accent: #FFECB3; }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Nunito', 'Poppins', sans-serif; transition: all 0.2s ease; }
+        body { background-color: #333; display: flex; justify-content: center; align-items: center; min-height: 100vh; }
+        
+        .app-container {
+            width: 100%; max-width: 412px; height: 92vh; max-height: 850px;
+            background-color: var(--bg-color); border-radius: 30px;
+            position: relative; overflow: hidden; display: flex; flex-direction: column;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.3);
+        }
+
+        .page { display: none; flex-direction: column; width: 100%; height: 100%; padding: 20px; overflow-y: auto; padding-bottom: 90px; }
+        .page.active { display: flex; }
+
+        /* Хөвөгч туулайн хэмжээ, байрлалыг зассан (Юм халхлахгүй) */
+        .sonny-floating-btn { position: absolute; bottom: 85px; right: 12px; z-index: 999; font-size: 35px; cursor: pointer; user-select: none; filter: drop-shadow(0 4px 6px rgba(0,0,0,0.1)); }
+
+        .sonny-fullscreen {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: linear-gradient(to bottom, var(--bg-color), var(--accent));
+            z-index: 2000; display: none; flex-direction: column; padding: 25px; align-items: center; text-align: center;
+        }
+        
+        /* Дүрийн давхарга - Малгайны хэмжээг гарчиг халхлахгүй болгож засав */
+        .duo-avatar-container { 
+            position: relative; width: 140px; height: 140px; margin: 15px auto; 
+            background: #FFF; border-radius: 50%; border: 3px solid var(--primary); 
+            display: flex; justify-content: center; align-items: center; overflow: visible;
+        }
+        
+        .avatar-layer { position: absolute; user-select: none; text-align: center; width: 100%; height: 100%; display: flex; justify-content: center; align-items: center; }
+        .layer-base { z-index: 1; font-size: 75px; transform: translateY(4px); }
+        .layer-eyes { z-index: 3; font-size: 42px; transform: translateY(12px); pointer-events: none; }
+        .layer-clothes { z-index: 2; font-size: 55px; transform: translateY(42px); }
+        .layer-hat { z-index: 4; font-size: 52px; top: -28px; left: 50%; transform: translateX(-50%); width: auto; height: auto; }
+
+        .nav-bar { height: 75px; background: var(--card-bg); display: flex; justify-content: space-around; align-items: center; border-top: 1px solid rgba(0,0,0,0.05); padding-bottom: 5px; }
+        .nav-item { display: flex; flex-direction: column; align-items: center; font-size: 9px; cursor: pointer; opacity: 0.5; color: var(--text-color); width: 14%; }
+        .nav-item.active { opacity: 1; font-weight: bold; color: var(--primary); }
+        .nav-item span { font-size: 18px; margin-bottom: 2px; }
+
+        .card { background: var(--card-bg); border-radius: 20px; padding: 15px; margin-bottom: 15px; box-shadow: 0 4px 10px rgba(0,0,0,0.03); }
+        h2, h3, h4, p, span, label { color: var(--text-color); }
+        .title { font-size: 22px; font-weight: 700; text-align: center; margin-bottom: 15px; }
+
+        .btn { background-color: var(--primary); border: none; padding: 10px 18px; border-radius: 12px; font-weight: bold; cursor: pointer; color: white !important; }
+        .shop-btn { background-color: var(--accent); color: var(--text-color) !important; padding: 8px 14px; border-radius: 12px; font-weight: bold; border: none; cursor: pointer; display: flex; align-items: center; gap: 4px; font-size: 13px; }
+        
+        input, select, textarea { width: 100%; padding: 12px; margin-bottom: 12px; border: 1px solid #ddd; border-radius: 12px; background: var(--card-bg); color: var(--text-color); font-size: 14px; }
+
+        .fb-profile-img-container { text-align: center; margin-bottom: 15px; }
+        .fb-avatar { width: 80px; height: 80px; border-radius: 50%; object-fit: cover; border: 3px solid var(--primary); background: #eee; margin: 0 auto 10px; display: block; }
+
+        .builder-row { display: flex; gap: 8px; overflow-x: auto; padding: 5px 0; margin-top: 10px; }
+        .opt-btn { background: var(--accent); border: none; padding: 8px 14px; border-radius: 10px; cursor: pointer; font-size: 13px; white-space: nowrap; color: var(--text-color); font-weight: 600; }
+        
+        .item-row { display: flex; align-items: center; justify-content: space-between; background: var(--card-bg); padding: 14px; border-radius: 12px; margin-bottom: 8px; border-left: 4px solid var(--primary); }
+        .item-row.done { opacity: 0.6; border-left-color: #ccc; }
+        .item-row.done span { text-decoration: line-through; }
+        
+        .checkbox { width: 22px; height: 22px; border: 2px solid var(--primary); border-radius: 50%; cursor: pointer; margin-right: 10px; display: inline-block; position: relative; background: var(--card-bg); }
+        .item-row.done .checkbox::after { content: "✓"; position: absolute; left: 4px; top: -2px; color: var(--primary); font-weight: bold; font-size: 14px; }
+
+        .modal { display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.4); z-index: 3000; justify-content: center; align-items: center; padding: 20px; }
+        .modal-content { background: var(--card-bg); width: 100%; max-width: 340px; padding: 20px; border-radius: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.2); position: relative; }
+
+        .calendar-container { background: var(--card-bg); padding: 12px; border-radius: 20px; margin-bottom: 15px; text-align: center; box-shadow: 0 4px 10px rgba(0,0,0,0.02); }
+        .calendar-month-title { font-size: 14px; font-weight: bold; margin-bottom: 10px; color: var(--text-color); opacity: 0.9; }
+        .calendar-strip { display: flex; justify-content: space-between; gap: 4px; }
+        .calendar-day { display: flex; flex-direction: column; align-items: center; padding: 6px 4px; border-radius: 12px; flex: 1; min-width: 40px; }
+        .calendar-day .day-name { font-size: 11px; opacity: 0.5; margin-bottom: 4px; font-weight: 600; }
+        .calendar-day .day-num { font-size: 14px; font-weight: 700; }
+        .calendar-day.active { background-color: var(--accent); }
+        .calendar-day.active .day-name, .calendar-day.active .day-num { color: #FF4D6D !important; opacity: 1; }
+
+        .birthday-banner { background: linear-gradient(45deg, #FF69B4, #FFD1DC); color: white !important; text-align: center; font-weight: bold; padding: 12px; border-radius: 15px; margin-bottom: 15px; }
+        .subject-item { display: flex; align-items: center; justify-content: space-between; background: var(--card-bg); padding: 15px; border-radius: 15px; margin-bottom: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.02); cursor: pointer; }
+    </style>
+</head>
+<body>
+
+    <div class="app-container" id="appMain">
+
+        <!-- УХААЛАГ AI ТУСЛАХ CHAT -->
+        <div class="sonny-fullscreen" id="sonnyFullScreenBox">
+            <div style="width: 100%; text-align: right; font-size: 24px; cursor: pointer;" onclick="closeSonnyFullScreen()">❌</div>
+            <div style="position: relative; width: 60px; height: 60px; margin: 0 auto;">
+                <div class="avatar-layer layer-base" style="font-size:45px;">🐰</div>
+            </div>
+            <h3 style="margin-top: 5px;">Sonny.bun Туслах</h3>
+            <p style="font-size: 11px; opacity: 0.7; margin-bottom: 10px;">Би хичээл болон төлөвлөгөөнд чинь тусална! ✨</p>
+            
+            <div style="background: white; width: 100%; flex: 1; border-radius: 20px; padding: 15px; overflow-y: auto; text-align: left; font-size: 13px; display: flex; flex-direction: column; gap: 8px;" id="fullChatMessages">
+                <div style="background: #F5F5F5; padding: 8px 12px; border-radius: 12px; align-self: flex-start;">Сайн уу! Өнөөдөр юу туслах вэ? 🌸</div>
+            </div>
+            <div style="width: 100%; display: flex; gap: 5px; margin-top: 10px;">
+                <input type="text" id="fullChatInput" placeholder="Sonny-д юм бичих..." style="margin-bottom: 0;" onkeypress="if(event.key==='Enter') sendFullChatMessage()">
+                <button class="btn" onclick="sendFullChatMessage()">Илгээх</button>
+            </div>
+        </div>
+
+        <div class="sonny-floating-btn" id="mascotFloating" style="display: none;" onclick="openSonnyFullScreen()">🐰</div>
+
+        <!-- 1. SPLASH / LOGIN -->
+        <div id="page-splash" class="page active" style="justify-content: center; align-items: center; text-align: center;">
+            <div style="font-size: 55px; margin-bottom: 10px;">🐰🌸</div>
+            <h1 style="font-size: 24px; color: var(--primary); margin-bottom: 20px;">Student Planner</h1>
+            <div class="card" style="width: 100%; max-width: 320px;">
+                <input type="text" id="authEmail" placeholder="И-мэйл хаяг...">
+                <input type="password" id="authPassword" placeholder="Нууц үг...">
+                <button class="btn" style="width: 100%; margin-bottom: 10px;" onclick="handleAuth()">Нэвтрэх / Бүртгүүлэх ✨</button>
+            </div>
+        </div>
+
+        <!-- 2. PIN LOCK -->
+        <div id="page-pinlock" class="page" style="justify-content: center; align-items: center; text-align: center;">
+            <div style="font-size: 40px; margin-bottom: 10px;">🔒</div>
+            <h3>PIN Код Оруулна уу</h3>
+            <input type="password" id="diaryPinInput" maxlength="4" placeholder="••••" style="text-align: center; font-size: 24px; width: 150px; letter-spacing: 5px;">
+            <br><button class="btn" onclick="unlockDiary()">Нээх 🔑</button>
+        </div>
+
+        <!-- 3. HOME PAGE -->
+        <div id="page-home" class="page">
+            <div class="calendar-container">
+                <div class="calendar-month-title" id="calendarMonthTitle">2026 оны 6-р сар</div>
+                <div class="calendar-strip" id="calendarStrip"></div>
+            </div>
+            <div id="birthdayBannerContainer"></div>
+            <div style="display: flex; justify-content: space-between; margin-bottom: 15px; font-weight: bold; font-size: 13px;">
+                <span>⭐ Level: <span id="homeLevel">1</span></span>
+                <span>🪙 Зоос: <span id="homeCoins">0</span></span>
+                <span>😊 Моод: <span id="homeMoodDisplay">Тохируулаагүй</span></span>
+            </div>
+            <div class="card">
+                <h3>📚 Өнөөдрийн хийх ажлууд</h3>
+                <div id="homeTodoList" style="margin-top: 10px; font-size: 14px; display: flex; flex-direction: column; gap: 5px;"></div>
+            </div>
+        </div>
+
+        <!-- 4. SUBJECTS -->
+        <div id="page-subjects" class="page">
+            <h2 class="title">📚 Хичээлүүд</h2>
+            <div style="display: flex; gap: 5px; margin-bottom: 15px;">
+                <input type="text" id="txtSubject" placeholder="Шинэ хичээл..." style="margin-bottom:0;">
+                <button class="btn" onclick="addSubject()">➕</button>
+            </div>
+            <div id="subjectsContainer"></div>
+        </div>
+
+        <!-- ХИЧЭЭЛИЙН ДЭЛГЭРЭНГҮЙ ЦОНХ -->
+        <div class="modal" id="subjectDetailsModal">
+            <div class="modal-content">
+                <h3 id="modalSubjectTitle" style="margin-bottom: 15px; text-align: center; color: var(--primary);">Хичээл</h3>
+                <label>👨‍🏫 Багшийн нэр:</label>
+                <input type="text" id="modalTeacher" placeholder="Багшийн нэр...">
+                <label>💯 Дүн:</label>
+                <input type="text" id="modalGrade" placeholder="Дүн оруулна уу...">
+                <label>📝 Мэдээлэл:</label>
+                <input type="text" id="modalInfo" placeholder="Бусад мэдээлэл...">
+                <label>🎯 Гэрийн даалгавар:</label>
+                <textarea id="modalHomework" rows="3" placeholder="Даалгавар..."></textarea>
+                <div style="display: flex; gap: 10px; justify-content: flex-end; margin-top: 5px;">
+                    <button class="btn" style="background:#ccc; color:#333 !important;" onclick="closeSubjectModal()">Хаах</button>
+                    <button class="btn" onclick="saveSubjectDetails()">Хадгалах ✨</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 5. TO-DO LIST -->
+        <div id="page-todo" class="page">
+            <h2 class="title">✅ To-Do Жагсаалт</h2>
+            <div style="display: flex; gap: 5px; margin-bottom: 15px;">
+                <input type="text" id="txtTodo" placeholder="Хийх зүйл..." style="margin-bottom:0;">
+                <button class="btn" onclick="addTodo()">➕</button>
+            </div>
+            <div id="todoContainer"></div>
+        </div>
+
+        <!-- 6. DIARY -->
+        <div id="page-diary" class="page">
+            <h2 class="title">📖 Өдрийн Тэмдэглэл</h2>
+            <div class="card">
+                <label>😊 Өнөөдрийн Mood:</label>
+                <select id="selMood" onchange="changeMood()">
+                    <option value="😃 Гоё">😃 Гоё</option>
+                    <option value="🥰 Хайрламаар">🥰 Хайрламаар</option>
+                    <option value="😐 Энгийн">😐 Энгийн</option>
+                    <option value="😔 Гунигтай">😔 Гунигтай</option>
+                    <option value="🤩 Баяртай">🤩 Баяртай</option>
+                    <option value="😴 Нойрмог">😴 Нойрмог</option>
+                    <option value="😡 Ууртай">😡 Ууртай</option>
+                    <option value="🤔 Бодлогоширсон">🤔 Бодлогоширсон</option>
+                </select>
+            </div>
+            <textarea id="txtDiary" rows="8" placeholder="Өнөөдөр юу тохиолдов?..." oninput="saveDiary()"></textarea>
+        </div>
+
+        <!-- 7. SHOP PAGE -->
+        <div id="page-shop" class="page">
+            <h2 class="title">🛍️ Дэлгүүр</h2>
+            <div class="card" style="text-align: center; font-weight: bold; background: var(--accent); margin-bottom: 15px; padding: 12px; border-radius: 15px;">Миний зоос: 🪙 <span id="lblShopCoins">0</span></div>
+            <div style="display: flex; flex-direction: column; gap: 10px;">
+                <div class="card" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0;"><span>🎓 Төгсөлтийн малгай</span><button class="shop-btn" onclick="buyShopItem('🎓', 'hat', 10)">🪙 10</button></div>
+                <div class="card" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0;"><span>🕶️ Гоёлын нүдний шил</span><button class="shop-btn" onclick="buyShopItem('🕶️', 'eyes', 15)">🪙 15</button></div>
+                <div class="card" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0;"><span>👕 Дүрэмт хувцас</span><button class="shop-btn" onclick="buyShopItem('👕', 'clothes', 20)">🪙 20</button></div>
+                <div class="card" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0;"><span>🎧 Утасгүй чихэвч</span><button class="shop-btn" onclick="buyShopItem('🎧', 'eyes', 25)">🪙 25</button></div>
+                <div class="card" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0;"><span>👑 Алтан титэм</span><button class="shop-btn" onclick="buyShopItem('👑', 'hat', 30)">🪙 30</button></div>
+            </div>
+        </div>
+
+        <!-- 8. PROFILE -->
+        <div id="page-profile" class="page">
+            <h2 class="title">👤 Миний Профайл</h2>
+            <div class="card fb-profile-img-container">
+                <img id="fbAvatarDisplay" class="fb-avatar" src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='80' height='80' viewBox='0 0 24 24'><circle cx='12' cy='8' r='4' fill='%23ccc'/><path d='M12 14c-6.1 0-10 4-10 4v2h20v-2s-3.9-4-10-4z' fill='%23ccc'/></svg>">
+                <label class="btn" style="display: inline-block; font-size:12px; padding: 6px 12px;">📷 Зураг оруулах
+                    <input type="file" id="profileImageInput" accept="image/*" style="display: none;" onchange="uploadFbImage()">
+                </label>
+            </div>
+
+            <div class="card" style="text-align: center;">
+                <h4>🎨 Өөрийн дүрийг бүтээх</h4>
+                <div class="duo-avatar-container">
+                    <div class="avatar-layer layer-base" id="duoBase">🐰</div>
+                    <div class="avatar-layer layer-eyes" id="duoEyes"></div>
+                    <div class="avatar-layer layer-clothes" id="duoClothes"></div>
+                    <div class="avatar-layer layer-hat" id="duoHat"></div>
+                </div>
+                <p style="font-size:11px; color:gray; margin-top:5px;">Дэлгүүрээс авсан зүйлсээ дарж өмсөнө үү:</p>
+                <div class="builder-row" id="inventoryContainer"></div>
+            </div>
+
+            <div class="card">
+                <label>Миний нэр:</label>
+                <input type="text" id="profileName" placeholder="Нэрээ бичнэ үү..." oninput="saveProfile()">
+                <label>Анги:</label>
+                <input type="text" id="profileClass" placeholder="Ангиа бичнэ үү..." oninput="saveProfile()">
+                <label>🎂 Төрсөн өдөр:</label>
+                <input type="date" id="profileBirthday" onchange="saveProfile();">
+            </div>
+        </div>
+
+        <!-- 9. SETTINGS -->
+        <div id="page-settings" class="page">
+            <h2 class="title" style="text-align: center; margin-bottom: 20px;">⚙️ Сэттингс</h2>
+            <div class="card">
+                <label>🎨 Theme (Сэдэв):</label>
+                <select id="themeSelect" onchange="changeAppTheme(this.value)">
+                    <option value="sakura">🩷 Pastel Pink</option>
+                    <option value="dark">🌙 Dark Theme</option>
+                    <option value="mint">💚 Mint Theme</option>
+                    <option value="lavender">💜 Lavender Dream</option>
+                </select>
+            </div>
+            <div class="card">
+                <label>🔒 Тэмдэглэлийн PIN солих (4 тоо):</label>
+                <input type="password" id="setPinCode" maxlength="4" placeholder="Шинэ PIN..." oninput="updatePinCode()">
+                <label>🔑 Нэвтрэх нууц үг:</label>
+                <input type="password" id="setPassCode" placeholder="Шинэ нууц үг...">
+                <button class="btn" style="width: 100%;" onclick="updatePassword()">Хадгалах</button>
+            </div>
+            <button class="btn" style="width:100%; background-color:#ff4d4d;" onclick="handleLogout()">🚪 Хаягнаас гарах</button>
+        </div>
+
+        <!-- НАВИГАЦИ -->
+        <div class="nav-bar" id="appNav" style="display: none;">
+            <div class="nav-item active" onclick="navigate('page-home', this)"><span>🏠</span>Нүүр</div>
+            <div class="nav-item" onclick="navigate('page-subjects', this)"><span>📚</span>Хичээл</div>
+            <div class="nav-item" onclick="navigate('page-todo', this)"><span>✅</span>To-Do</div>
+            <div class="nav-item" onclick="handleDiaryNavigation(this)"><span>📖</span>Diary</div>
+            <div class="nav-item" onclick="navigate('page-shop', this)"><span>🛍️</span>Shop</div>
+            <div class="nav-item" onclick="navigate('page-profile', this)"><span>👤</span>Профайл</div>
+            <div class="nav-item" onclick="navigate('page-settings', this)"><span>⚙️</span>Сэттингс</div>
+        </div>
+
+    </div>
+
+    <script>
+        let usersDatabase = JSON.parse(localStorage.getItem('planner_users_db')) || {};
+        let currentEmail = ""; 
+        let state = {};
+        let selectedSubjectIndex = null;
+
+        let defaults = {
+            xp: 0, level: 1, coins: 11, todos: [
+                { text: "Апп зохионо", done: false },
+                { text: "Апп хийх дарааллаа бичнэ", done: false }
+            ], subjects: [
+                { name: "Математик", teacher: "", grade: "", info: "", homework: "" }
+            ], mood: "🥰 Хайрламаар", 
+            diary: "", name: "Сондор", class: "7з", birthday: "", pinCode: "1234", password: "",
+            fbImage: "", duoBase: "🐰", duoEyes: "", duoClothes: "", duoHat: "",
+            activeTheme: "sakura", inventory: []
+        };
+
+        function handleAuth() {
+            let email = document.getElementById('authEmail').value.trim().toLowerCase();
+            let pass = document.getElementById('authPassword').value;
+            if(!email.includes("@") || pass.length < 4) { alert("Мэдээллээ зөв оруулна уу!"); return; }
+            currentEmail = email;
+
+            if (!usersDatabase[currentEmail]) {
+                usersDatabase[currentEmail] = { ...defaults, email: currentEmail, password: pass };
+                localStorage.setItem('planner_users_db', JSON.stringify(usersDatabase));
+            }
+            state = usersDatabase[currentEmail];
+            document.getElementById('mascotFloating').style.display = 'block';
+            document.getElementById('appNav').style.display = 'flex';
+            initApp();
+        }
+
+        function initApp() { 
+            showPage('page-home'); 
+            generateCalendarStrip();
+            loadStateData(); 
+        }
+        
+        function saveState() { 
+            if(currentEmail) {
+                usersDatabase[currentEmail] = state;
+                localStorage.setItem('planner_users_db', JSON.stringify(usersDatabase));
+            }
+        }
+
+        function handleLogout() {
+            currentEmail = ""; state = {};
+            document.getElementById('mascotFloating').style.display = 'none';
+            document.getElementById('appNav').style.display = 'none';
+            showPage('page-splash');
+        }
+
+        function showPage(pageId) { document.querySelectorAll('.page').forEach(p => p.classList.remove('active')); document.getElementById(pageId).classList.add('active'); }
+        function navigate(pageId, element) { showPage(pageId); document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active')); if(element) element.classList.add('active'); }
+
+        function openSonnyFullScreen() { document.getElementById('sonnyFullScreenBox').style.display = 'flex'; }
+        function closeSonnyFullScreen() { document.getElementById('sonnyFullScreenBox').style.display = 'none'; }
+        
+        function sendFullChatMessage() {
+            let input = document.getElementById('fullChatInput'); let text = input.value.trim(); if(text === "") return;
+            let msgBox = document.getElementById('fullChatMessages');
+            msgBox.innerHTML += `<div style="background: var(--primary); color: white; padding: 8px 12px; border-radius: 12px; align-self: flex-end; max-width: 80%;">${text}</div>`;
+            input.value = ""; msgBox.scrollTop = msgBox.scrollHeight;
+            setTimeout(() => {
+                let reply = `Мундаг байна шүү! Төлөвлөгөөгөө хамтдаа биелүүлцгээе. 💕`;
+                msgBox.innerHTML += `<div style="background: #F5F5F5; padding: 8px 12px; border-radius: 12px; align-self: flex-start; max-width: 80%;">${reply}</div>`;
+                msgBox.scrollTop = msgBox.scrollHeight;
+            }, 500);
+        }
+
+        function generateCalendarStrip() {
+            let strip = document.getElementById('calendarStrip');
+            let now = new Date();
+            if(!strip) return; strip.innerHTML = "";
+            let days = ['Ня', 'Да', 'Мя', 'Лх', 'Пү', 'Ба', 'Бя'];
+            for(let i = -3; i <= 3; i++) {
+                let d = new Date(); d.setDate(now.getDate() + i);
+                let isToday = i === 0 ? 'active' : '';
+                strip.innerHTML += `<div class="calendar-day ${isToday}"><span class="day-name">${days[d.getDay()]}</span><span class="day-num">${d.getDate()}</span></div>`;
+            }
+        }
+
+        function loadStateData() {
+            document.getElementById('homeLevel').innerText = state.level || 1;
+            document.getElementById('homeCoins').innerText = state.coins || 0;
+            document.getElementById('lblShopCoins').innerText = state.coins || 0;
+            document.getElementById('homeMoodDisplay').innerText = state.mood || "Тохируулаагүй";
+            document.getElementById('profileName').value = state.name || "";
+            document.getElementById('profileClass').value = state.class || "";
+            document.getElementById('profileBirthday').value = state.birthday || "";
+            document.getElementById('txtDiary').value = state.diary || "";
+            document.getElementById('selMood').value = state.mood || "😃 Гоё";
+            if(state.fbImage) document.getElementById('fbAvatarDisplay').src = state.fbImage;
+            document.getElementById('setPinCode').value = state.pinCode || "1234";
+
+            document.getElementById('duoBase').innerText = state.duoBase || "🐰";
+            document.getElementById('duoEyes').innerText = state.duoEyes || "";
+            document.getElementById('duoClothes').innerText = state.duoClothes || "";
+            document.getElementById('duoHat').innerText = state.duoHat || "";
+            
+            renderTodos(); renderSubjects(); renderInventory();
+            changeAppTheme(state.activeTheme || 'sakura');
+        }
+
+        function changeMood() {
+            state.mood = document.getElementById('selMood').value;
+            document.getElementById('homeMoodDisplay').innerText = state.mood;
+            saveState();
+        }
+
+        function saveDiary() {
+            state.diary = document.getElementById('txtDiary').value;
+            saveState();
+        }
+
+        function addSubject() {
+            let i = document.getElementById('txtSubject'); let name = i.value.trim(); if(name === "") return;
+            state.subjects.push({ name: name, teacher: "", grade: "", info: "", homework: "" }); i.value = ""; saveState(); renderSubjects();
+        }
+
+        function renderSubjects() {
+            let c = document.getElementById('subjectsContainer'); if(!c) return; c.innerHTML = "";
+            state.subjects.forEach((s, index) => {
+                c.innerHTML += `<div class="subject-item" onclick="openSubjectModal(${index})"><div>📚 <b>${s.name}</b> ${s.grade ? `(<span style='color:green;'>${s.grade}</span>)` : ''}</div><span style="color:red; font-size:16px; padding: 5px;" onclick="event.stopPropagation(); state.subjects.splice(${index},1); saveState(); renderSubjects();">🗑️</span></div>`;
+            });
+        }
+
+        function openSubjectModal(index) {
+            selectedSubjectIndex = index; let sub = state.subjects[index];
+            document.getElementById('modalSubjectTitle').innerText = sub.name;
+            document.getElementById('modalTeacher').value = sub.teacher || "";
+            document.getElementById('modalGrade').value = sub.grade || "";
+            document.getElementById('modalInfo').value = sub.info || "";
+            document.getElementById('modalHomework').value = sub.homework || "";
+            document.getElementById('subjectDetailsModal').style.display = 'flex';
+        }
+        function closeSubjectModal() { document.getElementById('subjectDetailsModal').style.display = 'none'; }
+        function saveSubjectDetails() {
+            if(selectedSubjectIndex !== null) {
+                let sub = state.subjects[selectedSubjectIndex];
+                sub.teacher = document.getElementById('modalTeacher').value;
+                sub.grade = document.getElementById('modalGrade').value;
+                sub.info = document.getElementById('modalInfo').value;
+                sub.homework = document.getElementById('modalHomework').value;
+                saveState(); renderSubjects(); closeSubjectModal();
+            }
+        }
+
+        function renderInventory() {
+            let invBox = document.getElementById('inventoryContainer'); if(!invBox) return; invBox.innerHTML = "";
+            if(!state.inventory || state.inventory.length === 0) { invBox.innerHTML = "<span style='font-size:12px; opacity:0.5;'>Одоогоор хувцас байхгүй.</span>"; return; }
+            state.inventory.forEach(item => { invBox.innerHTML += `<button class="opt-btn" onclick="equipItem('${item.emoji}', '${item.type}')">${item.emoji}</button>`; });
+        }
+
+        function equipItem(emoji, type) {
+            if(type === 'hat') state.duoHat = state.duoHat === emoji ? "" : emoji;
+            if(type === 'eyes') state.duoEyes = state.duoEyes === emoji ? "" : emoji;
+            if(type === 'clothes') state.duoClothes = state.duoClothes === emoji ? "" : emoji;
+            saveState(); loadStateData();
+        }
+
+        function buyShopItem(emoji, type, price) {
+            if(state.coins < price) { alert("Зоос хүрэлцэхгүй байна! 🪙"); return; }
+            state.coins -= price; if(!state.inventory) state.inventory = [];
+            state.inventory.push({ emoji: emoji, type: type }); saveState(); loadStateData();
+        }
+
+        function addTodo() { let i = document.getElementById('txtTodo'); if(i.value.trim()==="") return; state.todos.push({ text: i.value.trim(), done: false }); i.value = ""; saveState(); renderTodos(); }
+        function toggleTodo(i) { state.todos[i].done = !state.todos[i].done; if(state.todos[i].done) { state.coins += 5; } saveState(); loadStateData(); }
+        function renderTodos() {
+            let c = document.getElementById('todoContainer'); let h = document.getElementById('homeTodoList'); if(!c || !h) return; c.innerHTML = ""; h.innerHTML = "";
+            state.todos.forEach((t, i) => {
+                c.innerHTML += `<div class="item-row ${t.done ? 'done' : ''}"><div style="display:flex; align-items:center; cursor:pointer;" onclick="toggleTodo(${i})"><span class="checkbox"></span><span>${t.text}</span></div></div>`;
+                if(!t.done) h.innerHTML += `<div>• ${t.text}</div>`;
+            });
+            if(h.innerHTML === "") h.innerHTML = "<div style='opacity:0.6;'>Бүх ажил дууссан! ✨</div>";
+        }
+        function saveProfile() { state.name = document.getElementById('profileName').value || "Оюутан"; state.class = document.getElementById('profileClass').value; state.birthday = document.getElementById('profileBirthday').value; saveState(); }
+        function handleDiaryNavigation(element) { document.getElementById('diaryPinInput').value = ""; navigate('page-pinlock', null); }
+        function unlockDiary() { if(document.getElementById('diaryPinInput').value === state.pinCode) navigate('page-diary', null); else alert("🔒 PIN код буруу!"); }
+        function changeAppTheme(val) { document.body.className = "theme-" + val; state.activeTheme = val; saveState(); document.getElementById('themeSelect').value = val; }
+        function uploadFbImage() { let file = document.getElementById('profileImageInput').files[0]; let reader = new FileReader(); reader.onloadend = function() { state.fbImage = reader.result; document.getElementById('fbAvatarDisplay').src = reader.result; saveState(); }; if(file) reader.readAsDataURL(file); }
+        function updatePinCode() { let pin = document.getElementById('setPinCode').value; if(pin.length === 4) { state.pinCode = pin; saveState(); } }
+        function updatePassword() { let pass = document.getElementById('setPassCode').value.trim(); if(pass.length >= 4) { state.password = pass; saveState(); alert("🔑 Нууц үг шинэчлэгдлээ!"); document.getElementById('setPassCode').value=""; } }
+    </script>
+</body>
+</html>
